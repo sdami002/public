@@ -26,9 +26,25 @@ library(tidyverse)
 
 1. *Create a bulleted list with at least 3 items*
 
+* Milk
+* sugar
+* tea powder
+* ginger
+
 2. *Write a single paragraph that demonstrates the use of italics, bold, bold italics, code, and includes a link. The paragraph does not have to make sense.*
 
+Random Tales is a place where two *writers* collaborate together on a story. Each writes on __alternate__ days, taking the story in a new __*direction*__. Neither of them knows where the story will take them to. [link to paragraph](https://medium.com/random-tales/tagged/short-story).
+
+```python
+s = 4
+l = 1
+o = s+l
+print 0
+```
+
 3. *Create a level 3 heading*
+
+### Ingrediants to make tea
 
 ## R 
 
@@ -36,7 +52,16 @@ library(tidyverse)
 
 1. (Q2) *How many rows are in mpg? How many columns?*
 
+There are 234 rows and 11 colums in mpg.
+
 1. (Q4) *Make a scatterplot of hwy vs cyl.*
+
+```r
+install.packages("tidyverse")
+library(tidyverse)
+ggplot(mpg, aes(x = cyl, y = hwy)) +
+  geom_point()
+```
 
 
 #### Workflow: basics Exercises
@@ -52,10 +77,44 @@ fliter(mpg, cyl = 8)
 
 filter(diamond, carat > 3)
 ```
+### library(tidyverse) is correct
+### ggplot(dota = mpg) + 
+  ### geom_point(mapping = aes(x = displ, y = hwy)) is wrong because there is no command like dota in r studio.
+  correct code is
+  ```r
+library(tidyverse)
+ggplot(dota = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy))
+  ```
+### fliter(mpg, cyl = 8) is wrong because there is no command like flitter in r studio and cyl should assigned with 8 so we have to use ==.
+correct code is
+```r
+library(tidyverse)
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy))
+
+filter(mpg, cyl == 8)
+
+```
+### filter(diamond, carat > 3) is not correct because the  object diamonds should be in plural.
+
+The correct code is
+```r
+library(tidyverse)
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy))
+
+filter(mpg, cyl == 8)
+filter(diamonds, carat > 3)
+```
 
 ## Google Colab
 
 1. *What are the URLs of your Google Colab notebooks (both Python and R)?*
+
+Python URL: https://colab.research.google.com/drive/1OO1vFH8sT2A7aORGj7TL4JoohLu4rTlo?usp=sharing
+
+
 
 ## Tableau
 
