@@ -1,0 +1,2483 @@
+import React, { useEffect, useState, useRef } from "react";
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
+import MenuItem from "@mui/material/MenuItem";
+import FormControl from "@mui/material/FormControl";
+import Checkbox from "@mui/material/Checkbox";
+import Select from "@mui/material/Select";
+import Switch from "@mui/material/Switch";
+import { Typography } from "@mui/material";
+import Stack from "@mui/material/Stack";
+import { styled } from "@mui/material/styles";
+import { IconButton } from "@mui/material";
+import { createTheme } from "@mui/material/styles";
+import Popover from "@mui/material/Popover";
+import TuneIcon from "@mui/icons-material/Tune";
+import SyncAltIcon from "@mui/icons-material/SyncAlt";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import Radio from "@mui/material/Radio";
+import RadioGroup from "@mui/material/RadioGroup";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import ExpandMoreIcon from "@mui/icons-material//ExpandMore";
+import CheckBoxIcon from "@mui/icons-material/CheckBox";
+import Tooltip from "@mui/material/Tooltip";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import MuiInput from "@mui/material/Input";
+import Slider from "@mui/material/Slider";
+import DownloadWindow from "../ui-components/DownloadWindow";
+import Dialog from "@mui/material/Dialog";
+import Chip from "@mui/material/Chip";
+import OutlinedInput from "@mui/material/OutlinedInput";
+import Box from "@mui/material/Box";
+import InputLabel from "@mui/material/InputLabel";
+import ShareIcon from "@mui/icons-material/Share";
+
+import { useDispatch, useSelector } from "react-redux";
+
+const Input = styled(MuiInput)`
+  width: 62px;
+`;
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+      width: 250,
+    },
+  },
+};
+const agents = [500, 1000, 10000, 50000, 100000];
+
+const mSmarks = [
+  {
+    value: 0,
+    label: "0",
+  },
+  {
+    value: 0.25,
+    label: "0.25",
+  },
+  {
+    value: 0.35,
+    label: "0.35",
+  },
+  {
+    value: 0.45,
+    label: "0.45",
+  },
+];
+
+const Fmarks = [
+  {
+    value: 0,
+    label: "-25%",
+  },
+  {
+    value: 1,
+    label: "UN 2100 Target",
+  },
+  {
+    value: 2,
+    label: "+25%",
+  },
+];
+
+const edmarks = [
+  {
+    value: 0.33,
+    label: "0.33",
+  },
+  {
+    value: 0.66,
+    label: "0.66",
+  },
+  {
+    value: 0,
+    label: "0",
+  },
+];
+const marks = [
+  {
+    value: 0,
+    label: "0",
+  },
+  {
+    value: 0.01,
+    label: "0.01",
+  },
+  {
+    value: 0.03,
+    label: "0.03",
+  },
+  {
+    value: 0.06,
+    label: "0.06",
+  },
+];
+const dmarks = [
+  {
+    value: 0,
+    label: "0",
+  },
+  {
+    value: 0.005,
+    label: "0.005",
+  },
+  {
+    value: 0.015,
+    label: "0.015",
+  },
+  {
+    value: 0.03,
+    label: "0.03",
+  },
+];
+
+const smarks = [
+  {
+    value: 0,
+    label: "0",
+  },
+  {
+    value: 0.6,
+    label: "0.6",
+  },
+  {
+    value: 0.7,
+    label: "0.7",
+  },
+  {
+    value: 0.8,
+    label: "0.8",
+  },
+];
+
+const insmarks = [
+  {
+    value: 0,
+    label: "0",
+  },
+  {
+    value: 10,
+    label: "10",
+  },
+  {
+    value: 20,
+    label: "20",
+  },
+];
+
+const tccmarks = [
+  {
+    value: 0,
+    label: "0",
+  },
+  {
+    value: 0.001,
+    label: "0.001",
+  },
+  {
+    value: 0.05,
+    label: "0.05",
+  },
+];
+
+function getStyles(agent, agentValue, theme) {
+  return {
+    fontWeight:
+      agentValue.indexOf(agent) === -1
+        ? theme.typography.fontWeightRegular
+        : theme.typography.fontWeightMedium,
+  };
+}
+
+const theme = createTheme();
+theme.typography.h6 = {
+  fontWeight: "800",
+  fontSize: "1.0rem",
+};
+
+const FilterForm = ({ title, onFormSubmit, isLoggedIn, initialValues }) => {
+  const dispatch = useDispatch();
+  const copyForm = useSelector((state) => state.copyForm);
+  // Toggle form
+  const [isFormOpen, setIsFormOpen] = useState(true);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [buttonText, setButtonText] = useState("Update");
+  const [isButtonClicked, setIsButtonClicked] = useState(false);
+  const [isshare, setIsShare] = useState(false);
+
+  const handleFormToggle = () => {
+    setIsFormOpen((prevIsFormOpen) => !prevIsFormOpen);
+  };
+  const [downloadOpen, setDownloadOpen] = useState(false);
+
+  const handleDownloadOpen = () => {
+    setDownloadOpen(true);
+  };
+  const handleDownloadClose = () => {
+    setDownloadOpen(false);
+  };
+
+  useEffect(() => {
+    const queryParams = new URLSearchParams(window.location.search);
+    const formData = parseQueryString(queryParams);
+    //console.log(formData);
+    // Merge query parameters with initial values
+    setFormValues({ ...initialValues, ...formData });
+    onFormSubmit(formData);
+  }, []);
+
+  const parseQueryString = (query) => {
+    const params = new URLSearchParams(query);
+    const formData = {};
+    for (let param of params.entries()) {
+      // console.log(param[1]);
+      formData[param[0]] = parseQueryParamValue(param[1]);
+    }
+    //console.log(formData);
+    return formData;
+  };
+  const parseQueryParamValue = (value) => {
+    if (value === "true") return true;
+    if (value === "false") return false;
+    if (/^\d+$/.test(value)) return parseInt(value, 10);
+    if (/^\d+\.\d+$/.test(value)) return parseFloat(value);
+    if (value.includes(",")) return value.split(",").map(Number);
+
+    return value;
+  };
+  const handleButtonClick = async (buttonName) => {
+    if (buttonName === "Population") {
+      setFormValues({
+        ...formValues,
+        checkbox5: false,
+        checkbox2: false,
+        isPopulation: true,
+        isReligion: false,
+        isAffiliation: false,
+      });
+      setSelectedDimension("Population");
+    } else if (buttonName === "Affiliation") {
+      setFormValues({
+        ...formValues,
+        checkbox5: false,
+        checkbox2: false,
+        isAffiliation: true,
+        isPopulation: false,
+        isReligion: false,
+      });
+      setSelectedDimension("Affiliation Count");
+    } else if (buttonName === "Religiosity") {
+      setFormValues({
+        ...formValues,
+        checkbox2: false,
+        checkbox3: false,
+        checkbox4: false,
+        isReligion: true,
+        isPopulation: false,
+        isAffiliation: false,
+      });
+      setSelectedDimension("Religiosity Dimension");
+    }
+    setIsSubmitted(false);
+  };
+
+  // Popover
+  const [anchorEl, setAnchorEl] = React.useState(null);
+
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const open = Boolean(anchorEl);
+  const id = open ? "simple-popover" : undefined;
+
+  ////////
+  const [formValues, setFormValues] = React.useState(initialValues);
+
+  const handlemodelChange = (e) => {
+    const { name, value } = e.target;
+
+    setFormValues({
+      ...formValues,
+      [name]: typeof value === "string" ? value.split(",") : value,
+    });
+    setIsSubmitted(false);
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    onFormSubmit(formValues);
+    setIsSubmitted(true);
+    //console.log(formValues);
+    setIsShare(true);
+  };
+
+  const handleCountryInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormValues({
+      ...formValues,
+      [name]: value,
+    });
+    setIsSubmitted(false);
+  };
+
+  const handleCheckboxInputChange = (e) => {
+    const { name, checked } = e.target;
+    setFormValues({
+      ...formValues,
+      [name]: checked,
+    });
+    setIsSubmitted(false);
+  };
+
+  const handleSliderChange = (e) => {
+    const { name, value } = e.target;
+    setFormValues({
+      ...formValues,
+      [name]: value,
+    });
+    setIsSubmitted(false);
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    if (formValues.name < 0) {
+      setFormValues({
+        ...formValues,
+        [name]: 0,
+      });
+    } else if (formValues.name > 0.01) {
+      setFormValues({
+        ...formValues,
+        [name]: 0.01,
+      });
+    }
+    setIsSubmitted(false);
+  };
+
+  const handleChange = (event) => {
+    setFormValues({ ...formValues, [event.target.name]: event.target.checked });
+    setIsSubmitted(false);
+  };
+  const handleradiochange = (event) => {
+    setFormValues({ ...formValues, [event.target.name]: event.target.value });
+    setIsSubmitted(false);
+  };
+  const handleShare = (formValue) => {
+    const queryString = new URLSearchParams(formValue).toString();
+    const sharedUrl = `${window.location.origin}?${queryString}`;
+    window.open(sharedUrl, "_blank");
+  };
+
+  const IOSSwitch = styled((props) => (
+    <Switch
+      focusVisibleClassName=".Mui-focusVisible"
+      disableRipple
+      {...props}
+    />
+  ))(({ theme }) => ({
+    width: 52,
+    height: 23,
+    padding: 0,
+    "& .MuiSwitch-switchBase": {
+      padding: 0,
+      margin: 2,
+      transitionDuration: "300ms",
+      "&.Mui-checked": {
+        transform: "translateX(28px)",
+        color: "#fff",
+        "& + .MuiSwitch-track": {
+          backgroundColor:
+            theme.palette.mode === "dark" ? "#697282" : "#697282",
+          opacity: 1,
+          border: 0,
+        },
+        "&.Mui-disabled + .MuiSwitch-track": {
+          opacity: 0.5,
+        },
+      },
+      "&.Mui-focusVisible .MuiSwitch-thumb": {
+        color: "#697282",
+        border: "6px solid #fff",
+      },
+      "&.Mui-disabled .MuiSwitch-thumb": {
+        color:
+          theme.palette.mode === "light"
+            ? theme.palette.grey[100]
+            : theme.palette.grey[600],
+      },
+      "&.Mui-disabled + .MuiSwitch-track": {
+        opacity: theme.palette.mode === "light" ? 0.7 : 0.3,
+      },
+    },
+    "& .MuiSwitch-thumb": {
+      boxSizing: "border-box",
+      width: 20,
+      height: 20,
+    },
+    "& .MuiSwitch-track": {
+      borderRadius: 26 / 2,
+      backgroundColor: theme.palette.mode === "light" ? "#dbdbdb" : "#697282",
+      opacity: 1,
+      transition: theme.transitions.create(["background-color"], {
+        duration: 500,
+      }),
+    },
+  }));
+
+  const [selectedDimension, setSelectedDimension] = useState("Population");
+
+  const buttonRef = useRef(null);
+
+  useEffect(() => {
+    // Auto-click the button if checkbox1 is selected
+    if (formValues.checkbox1 && buttonRef.current) {
+      buttonRef.current.click();
+    }
+  }, [formValues.checkbox1]);
+
+  useEffect(() => {
+    // Do not copy an `undefined` form!
+    if (copyForm) {
+      // Copy over the form values
+      const newFormValues = JSON.parse(JSON.stringify(copyForm));
+      setFormValues(newFormValues);
+      // End the action, setting copyForm to undefined
+      dispatch({ type: "END_COPY_FORM" });
+    }
+  }, [copyForm]);
+  return (
+    <form onSubmit={handleSubmit}>
+      {isFormOpen && (
+        <div>
+          <Grid
+            container
+            style={{ justifyContent: "space-between" }}
+            direction="row"
+          >
+            <Grid container spacing={4} style={{ width: "auto" }}>
+              <Grid item>
+                <h2 style={{ fontWeight: 400 }}>{title}</h2>
+              </Grid>
+              <Grid item>
+                <FormControl
+                  sx={{ m: 1, minWidth: 120 }}
+                  size="small"
+                  className="second-step"
+                >
+                  <Select
+                    name="ctry"
+                    value={formValues.ctry}
+                    onChange={handleCountryInputChange}
+                    style={{
+                      marginTop: 10,
+                    }}
+                  >
+                    <MenuItem key="Norway" value="Norway">
+                      Norway
+                    </MenuItem>
+                    <MenuItem key="India" value="India">
+                      India
+                    </MenuItem>
+                    <MenuItem key="USA " value="USA">
+                      USA
+                    </MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
+            <Grid container spacing={4} style={{ width: "auto" }}>
+              <Grid item>
+                <Tooltip
+                  title="Text here to describe how filter form works"
+                  placement="bottom-start"
+                  arrow
+                  style={{ margin: "17px 0 0 0" }}
+                >
+                  <IconButton>
+                    <HelpOutlineIcon />
+                  </IconButton>
+                </Tooltip>
+              </Grid>
+              <Grid item>
+                <Button
+                  ref={buttonRef}
+                  aria-describedby={id}
+                  onClick={handleClick}
+                  variant="outlined"
+                  style={{
+                    minWidth: 40,
+                    margin: "20px 0 0 -15px",
+                    color: "black",
+                    borderColor: "black",
+                    display: isFormOpen ? "" : "none",
+                    opacity: selectedDimension === "" ? 0.5 : 1,
+                    pointerEvents: selectedDimension === "" ? "none" : "auto",
+                  }}
+                  className="fifth-step"
+                >
+                  <TuneIcon />
+                </Button>
+                <Popover
+                  id={id}
+                  open={open}
+                  anchorEl={anchorEl}
+                  onClose={handleClose}
+                  anchorOrigin={{
+                    vertical: "bottom",
+                    horizontal: "left",
+                  }}
+                >
+                  <div style={{ padding: "20px 40px" }}>
+                    {formValues.isPopulation || formValues.isAffiliation ? (
+                      <>
+                        <Grid item>
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            alignItems="center"
+                          >
+                            <Grid
+                              container
+                              justifyContent="space-between"
+                              alignItems="flex-start"
+                              style={{ margin: "15px 0px" }}
+                            >
+                              <Grid item>
+                                <Typography style={{ marginTop: 40 }}>
+                                  Agent Count
+                                </Typography>
+                              </Grid>
+                              <Grid item>
+                                <InputLabel id="demo-multiple-chip-label">
+                                  Agents
+                                </InputLabel>
+
+                                <Select
+                                  labelId="demo-multiple-chip-label"
+                                  id="demo-multiple-chip"
+                                  name="agents"
+                                  multiple
+                                  value={formValues.agents}
+                                  onChange={handlemodelChange}
+                                  input={
+                                    <OutlinedInput
+                                      id="select-multiple-chip"
+                                      label="Chip"
+                                    />
+                                  }
+                                  renderValue={(selected) => (
+                                    <Box
+                                      sx={{
+                                        display: "flex",
+                                        flexWrap: "wrap",
+                                        gap: 0.5,
+                                      }}
+                                    >
+                                      {selected.map((value) => (
+                                        <Chip key={value} label={value} />
+                                      ))}
+                                    </Box>
+                                  )}
+                                  MenuProps={MenuProps}
+                                >
+                                  {agents.map((agent) => (
+                                    <MenuItem
+                                      key={agent}
+                                      value={agent}
+                                      style={getStyles(
+                                        agent,
+                                        formValues.agents,
+                                        theme
+                                      )}
+                                    >
+                                      {agent}
+                                    </MenuItem>
+                                  ))}
+                                </Select>
+                              </Grid>
+                            </Grid>
+                          </Stack>
+                        </Grid>
+                        <Grid item>
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            alignItems="center"
+                          >
+                            <Grid container spacing={8} alignItems="center">
+                              <Grid item>
+                                <Typography>Model Step</Typography>
+                              </Grid>
+                              <Grid item>
+                                <RadioGroup
+                                  name="modelstep"
+                                  value={formValues.modelstep}
+                                  onChange={handleradiochange}
+                                >
+                                  <FormControlLabel
+                                    value="false"
+                                    control={<Radio />}
+                                    label="One year"
+                                  />
+                                  <FormControlLabel
+                                    value="true"
+                                    control={<Radio />}
+                                    label="Five year"
+                                  />
+                                </RadioGroup>
+                              </Grid>
+                            </Grid>
+                          </Stack>
+                        </Grid>
+                        <Grid item>
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            alignItems="center"
+                          >
+                            <Grid container spacing={12} alignItems="center">
+                              <Grid item>
+                                <Typography>Layout</Typography>
+                              </Grid>
+                              <Grid item>
+                                <RadioGroup
+                                  aria-labelledby="demo-controlled-radio-buttons-group"
+                                  name="stochastic"
+                                  value={formValues.stochastic}
+                                  onChange={handleradiochange}
+                                >
+                                  <FormControlLabel
+                                    value="false"
+                                    control={<Radio />}
+                                    label="Bottom up (Stochastic)"
+                                  />
+                                  <FormControlLabel
+                                    value="true"
+                                    control={<Radio />}
+                                    label="Top Down (Less Stochastic)"
+                                  />
+                                </RadioGroup>
+                              </Grid>
+                            </Grid>
+                          </Stack>
+                        </Grid>
+                        <Grid item>
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            alignItems="center"
+                          >
+                            <Grid container spacing={6.5} alignItems="center">
+                              <Grid item>
+                                <Typography>Split/Intuitive</Typography>
+                              </Grid>
+                              <Grid item>
+                                <RadioGroup
+                                  name="split"
+                                  value={formValues.split}
+                                  onChange={handleradiochange}
+                                >
+                                  <FormControlLabel
+                                    value="false"
+                                    control={<Radio />}
+                                    label="Split Fertility"
+                                  />
+                                  <FormControlLabel
+                                    value="true"
+                                    control={<Radio />}
+                                    label="Intuitive"
+                                  />
+                                </RadioGroup>
+                              </Grid>
+                            </Grid>
+                          </Stack>
+                        </Grid>
+                        <Grid item>
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            alignItems="center"
+                          >
+                            <Grid
+                              container
+                              justifyContent="space-between"
+                              alignItems="flex-start"
+                              style={{ margin: "15px 0px" }}
+                            >
+                              <Grid item>
+                                <Typography>
+                                  Agent Initialize per age year
+                                </Typography>
+                              </Grid>
+                              <Grid item>
+                                <IOSSwitch
+                                  checked={formValues.agentinitializeperageyear}
+                                  onChange={handleChange}
+                                  inputProps={{
+                                    "aria-label": "controlled",
+                                  }}
+                                  name="agentinitializeperageyear"
+                                />
+                              </Grid>
+                            </Grid>
+                          </Stack>
+                        </Grid>
+                        <Grid item>
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            alignItems="center"
+                          >
+                            <Grid
+                              container
+                              justifyContent="space-between"
+                              alignItems="flex-start"
+                              style={{ margin: "15px 0px" }}
+                            >
+                              <Grid item>
+                                <Typography>Force Use Split Age</Typography>
+                              </Grid>
+                              <Grid item>
+                                <IOSSwitch
+                                  checked={formValues.forceusesplitage}
+                                  onChange={handleChange}
+                                  name="forceusesplitage"
+                                />
+                              </Grid>
+                            </Grid>
+                          </Stack>
+                        </Grid>
+                        <Grid item>
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            alignItems="center"
+                          >
+                            <Grid
+                              container
+                              justifyContent="space-between"
+                              alignItems="flex-start"
+                              style={{ margin: "15px 0px" }}
+                            >
+                              <Grid item>
+                                <Typography>Top Down Initial Agents</Typography>
+                              </Grid>
+                              <Grid item>
+                                <IOSSwitch
+                                  checked={formValues.topdowninitialagents}
+                                  onChange={handleChange}
+                                  name="topdowninitialagents"
+                                />
+                              </Grid>
+                            </Grid>
+                          </Stack>
+                        </Grid>
+                        <Grid item>
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            alignItems="center"
+                          >
+                            <Grid
+                              container
+                              justifyContent="space-between"
+                              alignItems="flex-start"
+                              style={{ margin: "15px 0px" }}
+                            >
+                              <Grid item>
+                                <Typography>
+                                  Immigrants Immune from Death
+                                </Typography>
+                              </Grid>
+                              <Grid item>
+                                <IOSSwitch
+                                  checked={formValues.immigrantsimmunefromdeath}
+                                  onChange={handleChange}
+                                  name="immigrantsimmunefromdeath"
+                                />
+                              </Grid>
+                            </Grid>
+                          </Stack>
+                        </Grid>
+
+                        {formValues.isAffiliation && (
+                          <>
+                            <Grid item>
+                              <Stack
+                                direction="row"
+                                spacing={1}
+                                alignItems="center"
+                              >
+                                <Grid
+                                  container
+                                  justifyContent="space-between"
+                                  alignItems="flex-start"
+                                  style={{ margin: "15px 0px" }}
+                                >
+                                  <Grid item>
+                                    <Typography>
+                                      Intuitive Switching Rates
+                                    </Typography>
+                                  </Grid>
+                                  <Grid item>
+                                    <IOSSwitch
+                                      checked={
+                                        formValues.intuitiveSwitchingRates
+                                      }
+                                      onChange={handleChange}
+                                      name="intuitiveSwitchingRates"
+                                    />
+                                  </Grid>
+                                </Grid>
+                              </Stack>
+                            </Grid>
+                          </>
+                        )}
+                      </>
+                    ) : null}
+                    {formValues.isReligion && (
+                      <>
+                        {/* Slider Code */}
+                        <Grid item>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Grid item>
+                              <Typography>Mode Strictness</Typography>
+                            </Grid>
+                            <Grid item>
+                              <Input
+                                value={formValues.modestrictness}
+                                name="modestrictness"
+                                size="small"
+                                onChange={handleCountryInputChange}
+                                onBlur={handleBlur}
+                                inputProps={{
+                                  step: 0.15,
+                                  min: 0,
+                                  max: 0.45,
+                                  type: "number",
+                                  "aria-labelledby": "input-slider",
+                                }}
+                              />
+                            </Grid>
+                          </Grid>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Slider
+                              value={formValues.modestrictness}
+                              name="modestrictness"
+                              onChange={handleSliderChange}
+                              aria-label="Restricted values"
+                              marks={mSmarks}
+                              style={{ color: "#2e3b55" }}
+                              step={null}
+                              min={0}
+                              max={0.45}
+                              valueLabelDisplay="auto"
+                            />
+                          </Grid>
+                        </Grid>
+
+                        <Grid item>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Grid item>
+                              <Typography>
+                                Christians Total Fertility
+                              </Typography>
+                            </Grid>
+                            <Grid item>
+                              <Input
+                                value={formValues.ChristiansTotalFertility}
+                                name="ChristiansTotalFertility"
+                                size="small"
+                                onChange={handleCountryInputChange}
+                                onBlur={handleBlur}
+                                inputProps={{
+                                  step: 1,
+                                  min: 0,
+                                  max: 2,
+                                  type: "number",
+                                  "aria-labelledby": "input-slider",
+                                }}
+                              />
+                            </Grid>
+                          </Grid>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Slider
+                              value={
+                                typeof formValues.ChristiansTotalFertility ===
+                                "number"
+                                  ? formValues.ChristiansTotalFertility
+                                  : 0
+                              }
+                              name="ChristiansTotalFertility"
+                              onChange={handleSliderChange}
+                              aria-label="Restricted values"
+                              defaultValue={formValues.ChristiansTotalFertility}
+                              marks={Fmarks}
+                              style={{ color: "#2e3b55" }}
+                              step={null}
+                              min={0}
+                              max={2}
+                              valueLabelDisplay="auto"
+                            />
+                          </Grid>
+                        </Grid>
+
+                        <Grid item>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Grid item>
+                              <Typography>
+                                Unaffiliated Total Fertility
+                              </Typography>
+                            </Grid>
+                            <Grid item>
+                              <Input
+                                value={formValues.UnaffiliatedTotalFertility}
+                                name="UnaffiliatedTotalFertility"
+                                size="small"
+                                onChange={handleCountryInputChange}
+                                onBlur={handleBlur}
+                                inputProps={{
+                                  step: 1,
+                                  min: 0,
+                                  max: 2,
+                                  type: "number",
+                                  "aria-labelledby": "input-slider",
+                                }}
+                              />
+                            </Grid>
+                          </Grid>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Slider
+                              value={
+                                typeof formValues.UnaffiliatedTotalFertility ===
+                                "number"
+                                  ? formValues.UnaffiliatedTotalFertility
+                                  : 0
+                              }
+                              name="UnaffiliatedTotalFertility"
+                              onChange={handleSliderChange}
+                              aria-label="Restricted values"
+                              defaultValue={
+                                formValues.UnaffiliatedTotalFertility
+                              }
+                              marks={Fmarks}
+                              style={{ color: "#2e3b55" }}
+                              step={null}
+                              min={0}
+                              max={2}
+                              valueLabelDisplay="auto"
+                            />
+                          </Grid>
+                        </Grid>
+
+                        <Grid item>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Grid item>
+                              <Typography>Buddhists Total Fertility</Typography>
+                            </Grid>
+                            <Grid item>
+                              <Input
+                                value={formValues.BuddhistsTotalFertility}
+                                name="BuddhistsTotalFertility"
+                                size="small"
+                                onChange={handleCountryInputChange}
+                                onBlur={handleBlur}
+                                inputProps={{
+                                  step: 1,
+                                  min: 0,
+                                  max: 2,
+                                  type: "number",
+                                  "aria-labelledby": "input-slider",
+                                }}
+                              />
+                            </Grid>
+                          </Grid>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Slider
+                              value={
+                                typeof formValues.BuddhistsTotalFertility ===
+                                "number"
+                                  ? formValues.BuddhistsTotalFertility
+                                  : 0
+                              }
+                              name="BuddhistsTotalFertility"
+                              onChange={handleSliderChange}
+                              aria-label="Restricted values"
+                              defaultValue={formValues.BuddhistsTotalFertility}
+                              marks={Fmarks}
+                              style={{ color: "#2e3b55" }}
+                              step={null}
+                              min={0}
+                              max={2}
+                              valueLabelDisplay="auto"
+                            />
+                          </Grid>
+                        </Grid>
+
+                        <Grid item>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Grid item>
+                              <Typography>Muslims Total Fertility</Typography>
+                            </Grid>
+                            <Grid item>
+                              <Input
+                                value={formValues.MuslimsTotalFertility}
+                                name="MuslimsTotalFertility"
+                                size="small"
+                                onChange={handleCountryInputChange}
+                                onBlur={handleBlur}
+                                inputProps={{
+                                  step: 1,
+                                  min: 0,
+                                  max: 2,
+                                  type: "number",
+                                  "aria-labelledby": "input-slider",
+                                }}
+                              />
+                            </Grid>
+                          </Grid>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Slider
+                              value={
+                                typeof formValues.MuslimsTotalFertility ===
+                                "number"
+                                  ? formValues.MuslimsTotalFertility
+                                  : 0
+                              }
+                              name="MuslimsTotalFertility"
+                              onChange={handleSliderChange}
+                              aria-label="Restricted values"
+                              defaultValue={formValues.MuslimsTotalFertility}
+                              marks={Fmarks}
+                              style={{ color: "#2e3b55" }}
+                              step={null}
+                              min={0}
+                              max={2}
+                              valueLabelDisplay="auto"
+                            />
+                          </Grid>
+                        </Grid>
+
+                        <Grid item>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Grid item>
+                              <Typography>Jews Total Fertility</Typography>
+                            </Grid>
+                            <Grid item>
+                              <Input
+                                value={formValues.JewsTotalFertility}
+                                name="JewsTotalFertility"
+                                size="small"
+                                onChange={handleCountryInputChange}
+                                onBlur={handleBlur}
+                                inputProps={{
+                                  step: 1,
+                                  min: 0,
+                                  max: 2,
+                                  type: "number",
+                                  "aria-labelledby": "input-slider",
+                                }}
+                              />
+                            </Grid>
+                          </Grid>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Slider
+                              value={
+                                typeof formValues.JewsTotalFertility ===
+                                "number"
+                                  ? formValues.JewsTotalFertility
+                                  : 0
+                              }
+                              name="JewsTotalFertility"
+                              onChange={handleSliderChange}
+                              aria-label="Restricted values"
+                              defaultValue={formValues.JewsTotalFertility}
+                              marks={Fmarks}
+                              style={{ color: "#2e3b55" }}
+                              step={null}
+                              min={0}
+                              max={2}
+                              valueLabelDisplay="auto"
+                            />
+                          </Grid>
+                        </Grid>
+
+                        <Grid item>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Grid item>
+                              <Typography>Hindus Total Fertility</Typography>
+                            </Grid>
+                            <Grid item>
+                              <Input
+                                value={formValues.HindusTotalFertility}
+                                name="HindusTotalFertility"
+                                size="small"
+                                onChange={handleCountryInputChange}
+                                onBlur={handleBlur}
+                                inputProps={{
+                                  step: 1,
+                                  min: 0,
+                                  max: 2,
+                                  type: "number",
+                                  "aria-labelledby": "input-slider",
+                                }}
+                              />
+                            </Grid>
+                          </Grid>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Slider
+                              value={
+                                typeof formValues.HindusTotalFertility ===
+                                "number"
+                                  ? formValues.HindusTotalFertility
+                                  : 0
+                              }
+                              name="HindusTotalFertility"
+                              onChange={handleSliderChange}
+                              aria-label="Restricted values"
+                              defaultValue={formValues.HindusTotalFertility}
+                              marks={Fmarks}
+                              style={{ color: "#2e3b55" }}
+                              step={null}
+                              min={0}
+                              max={2}
+                              valueLabelDisplay="auto"
+                            />
+                          </Grid>
+                        </Grid>
+
+                        <Grid item>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Grid item>
+                              <Typography>Other Total Fertility</Typography>
+                            </Grid>
+                            <Grid item>
+                              <Input
+                                value={formValues.OtherTotalFertility}
+                                name="OtherTotalFertility"
+                                size="small"
+                                onChange={handleCountryInputChange}
+                                onBlur={handleBlur}
+                                inputProps={{
+                                  step: 1,
+                                  min: 0,
+                                  max: 2,
+                                  type: "number",
+                                  "aria-labelledby": "input-slider",
+                                }}
+                              />
+                            </Grid>
+                          </Grid>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Slider
+                              value={
+                                typeof formValues.OtherTotalFertility ===
+                                "number"
+                                  ? formValues.OtherTotalFertility
+                                  : 0
+                              }
+                              name="OtherTotalFertility"
+                              onChange={handleSliderChange}
+                              aria-label="Restricted values"
+                              defaultValue={formValues.OtherTotalFertility}
+                              marks={Fmarks}
+                              style={{ color: "#2e3b55" }}
+                              step={null}
+                              min={0}
+                              max={2}
+                              valueLabelDisplay="auto"
+                            />
+                          </Grid>
+                        </Grid>
+
+                        <Grid item>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Grid item>
+                              <Typography>Folk Total Fertility</Typography>
+                            </Grid>
+                            <Grid item>
+                              <Input
+                                value={formValues.FolkTotalFertility}
+                                name="FolkTotalFertility"
+                                size="small"
+                                onChange={handleCountryInputChange}
+                                onBlur={handleBlur}
+                                inputProps={{
+                                  step: 1,
+                                  min: 0,
+                                  max: 2,
+                                  type: "number",
+                                  "aria-labelledby": "input-slider",
+                                }}
+                              />
+                            </Grid>
+                          </Grid>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Slider
+                              value={
+                                typeof formValues.FolkTotalFertility ===
+                                "number"
+                                  ? formValues.FolkTotalFertility
+                                  : 0
+                              }
+                              name="FolkTotalFertility"
+                              onChange={handleSliderChange}
+                              aria-label="Restricted values"
+                              defaultValue={formValues.FolkTotalFertility}
+                              marks={Fmarks}
+                              style={{ color: "#2e3b55" }}
+                              step={null}
+                              min={0}
+                              max={2}
+                              valueLabelDisplay="auto"
+                            />
+                          </Grid>
+                        </Grid>
+                        <Grid item>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Grid item>
+                              <Typography>Education Secular</Typography>
+                            </Grid>
+                            <Grid item>
+                              <Input
+                                value={formValues.educationSecular}
+                                name="educationSecular"
+                                size="small"
+                                onChange={handleCountryInputChange}
+                                onBlur={handleBlur}
+                                inputProps={{
+                                  step: 0.001,
+                                  min: 0,
+                                  max: 0.66,
+                                  type: "number",
+                                  "aria-labelledby": "input-slider",
+                                }}
+                              />
+                            </Grid>
+                          </Grid>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Slider
+                              value={
+                                typeof formValues.educationSecular === "number"
+                                  ? formValues.educationSecular
+                                  : 0
+                              }
+                              name="educationSecular"
+                              onChange={handleSliderChange}
+                              aria-label="Restricted values"
+                              defaultValue={formValues.educationSecular}
+                              marks={edmarks}
+                              style={{ color: "#2e3b55" }}
+                              step={null}
+                              min={0}
+                              max={0.66}
+                              valueLabelDisplay="auto"
+                            />
+                          </Grid>
+                        </Grid>
+
+                        <Grid item>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Grid item>
+                              <Typography>Education Religion</Typography>
+                            </Grid>
+                            <Grid item>
+                              <Input
+                                value={formValues.educationRelig}
+                                name="educationRelig"
+                                size="small"
+                                onChange={handleCountryInputChange}
+                                onBlur={handleBlur}
+                                inputProps={{
+                                  step: 0.001,
+                                  min: 0,
+                                  max: 0.66,
+                                  type: "number",
+                                  "aria-labelledby": "input-slider",
+                                }}
+                              />
+                            </Grid>
+                          </Grid>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Slider
+                              value={
+                                typeof formValues.educationRelig === "number"
+                                  ? formValues.educationRelig
+                                  : 0
+                              }
+                              name="educationRelig"
+                              onChange={handleSliderChange}
+                              aria-label="Restricted values"
+                              defaultValue={formValues.educationRelig}
+                              marks={edmarks}
+                              style={{ color: "#2e3b55" }}
+                              step={null}
+                              min={0}
+                              max={0.66}
+                              valueLabelDisplay="auto"
+                            />
+                          </Grid>
+                        </Grid>
+
+                        <Grid item>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Grid item>
+                              <Typography>Freedom</Typography>
+                            </Grid>
+                            <Grid item>
+                              <Input
+                                value={formValues.freedom}
+                                name="freedom"
+                                size="small"
+                                onChange={handleCountryInputChange}
+                                onBlur={handleBlur}
+                                inputProps={{
+                                  step: 0.001,
+                                  min: 0,
+                                  max: 0.66,
+                                  type: "number",
+                                  "aria-labelledby": "input-slider",
+                                }}
+                              />
+                            </Grid>
+                          </Grid>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Slider
+                              value={
+                                typeof formValues.freedom === "number"
+                                  ? formValues.freedom
+                                  : 0
+                              }
+                              name="freedom"
+                              onChange={handleSliderChange}
+                              aria-label="Restricted values"
+                              defaultValue={formValues.freedom}
+                              marks={edmarks}
+                              style={{ color: "#2e3b55" }}
+                              step={null}
+                              min={0}
+                              max={0.66}
+                              valueLabelDisplay="auto"
+                            />
+                          </Grid>
+                        </Grid>
+
+                        <Grid item>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Grid item>
+                              <Typography>Existential Security</Typography>
+                            </Grid>
+                            <Grid item>
+                              <Input
+                                value={formValues.existentialSecurity}
+                                name="existentialSecurity"
+                                size="small"
+                                onChange={handleCountryInputChange}
+                                onBlur={handleBlur}
+                                inputProps={{
+                                  step: 0.001,
+                                  min: 0,
+                                  max: 0.66,
+                                  type: "number",
+                                  "aria-labelledby": "input-slider",
+                                }}
+                              />
+                            </Grid>
+                          </Grid>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Slider
+                              value={
+                                typeof formValues.existentialSecurity ===
+                                "number"
+                                  ? formValues.existentialSecurity
+                                  : 0
+                              }
+                              name="existentialSecurity"
+                              onChange={handleSliderChange}
+                              aria-label="Restricted values"
+                              defaultValue={formValues.existentialSecurity}
+                              marks={edmarks}
+                              style={{ color: "#2e3b55" }}
+                              step={null}
+                              min={0}
+                              max={0.66}
+                              valueLabelDisplay="auto"
+                            />
+                          </Grid>
+                        </Grid>
+
+                        <Grid item>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Grid item>
+                              <Typography>Lifestyle Opportunities</Typography>
+                            </Grid>
+                            <Grid item>
+                              <Input
+                                value={formValues.lifestyleOpportunities}
+                                name="lifestyleOpportunities"
+                                size="small"
+                                onChange={handleCountryInputChange}
+                                onBlur={handleBlur}
+                                inputProps={{
+                                  step: 0.001,
+                                  min: 0,
+                                  max: 0.66,
+                                  type: "number",
+                                  "aria-labelledby": "input-slider",
+                                }}
+                              />
+                            </Grid>
+                          </Grid>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Slider
+                              value={
+                                typeof formValues.lifestyleOpportunities ===
+                                "number"
+                                  ? formValues.lifestyleOpportunities
+                                  : 0
+                              }
+                              name="lifestyleOpportunities"
+                              onChange={handleSliderChange}
+                              aria-label="Restricted values"
+                              defaultValue={formValues.lifestyleOpportunities}
+                              marks={edmarks}
+                              style={{ color: "#2e3b55" }}
+                              step={null}
+                              min={0}
+                              max={0.66}
+                              valueLabelDisplay="auto"
+                            />
+                          </Grid>
+                        </Grid>
+
+                        <Grid item>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Grid item>
+                              <Typography>Attitude Increment</Typography>
+                            </Grid>
+                            <Grid item>
+                              <Input
+                                value={formValues.attitudeincrement}
+                                name="attitudeincrement"
+                                size="small"
+                                onChange={handleCountryInputChange}
+                                onBlur={handleBlur}
+                                inputProps={{
+                                  step: 0.001,
+                                  min: 0,
+                                  max: 0.06,
+                                  type: "number",
+                                  "aria-labelledby": "input-slider",
+                                }}
+                              />
+                            </Grid>
+                          </Grid>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Slider
+                              value={
+                                typeof formValues.attitudeincrement === "number"
+                                  ? formValues.attitudeincrement
+                                  : 0
+                              }
+                              name="attitudeincrement"
+                              onChange={handleSliderChange}
+                              aria-labelledby="input-slider"
+                              step={null}
+                              min={0}
+                              max={0.06}
+                              valueLabelDisplay="auto"
+                              marks={marks}
+                              style={{ color: "#2e3b55" }}
+                            />
+                          </Grid>
+                        </Grid>
+
+                        <Grid item>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Grid item>
+                              <Typography>Dimensions Increment</Typography>
+                            </Grid>
+                            <Grid item>
+                              <Input
+                                value={formValues.dimensionsIncrement}
+                                name="dimensionsIncrement"
+                                size="small"
+                                onChange={handleCountryInputChange}
+                                onBlur={handleBlur}
+                                inputProps={{
+                                  step: 0.001,
+                                  min: 0,
+                                  max: 0.01,
+                                  type: "number",
+                                  "aria-labelledby": "input-slider",
+                                }}
+                              />
+                            </Grid>
+                          </Grid>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Slider
+                              value={
+                                typeof formValues.dimensionsIncrement ===
+                                "number"
+                                  ? formValues.dimensionsIncrement
+                                  : 0
+                              }
+                              name="dimensionsIncrement"
+                              onChange={handleSliderChange}
+                              aria-labelledby="input-slider"
+                              step={null}
+                              min={0}
+                              max={0.06}
+                              valueLabelDisplay="auto"
+                              marks={marks}
+                              style={{ color: "#2e3b55" }}
+                            />
+                          </Grid>
+                        </Grid>
+
+                        <Grid item>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Grid item>
+                              <Typography>Attitude Self Decrement</Typography>
+                            </Grid>
+                            <Grid item>
+                              <Input
+                                value={formValues.attitudeSelfDecrement}
+                                name="attitudeSelfDecrement"
+                                size="small"
+                                onChange={handleCountryInputChange}
+                                onBlur={handleBlur}
+                                inputProps={{
+                                  step: 0.001,
+                                  min: 0,
+                                  max: 0.03,
+                                  type: "number",
+                                  "aria-labelledby": "input-slider",
+                                }}
+                              />
+                            </Grid>
+                          </Grid>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Slider
+                              value={
+                                typeof formValues.attitudeSelfDecrement ===
+                                "number"
+                                  ? formValues.attitudeSelfDecrement
+                                  : 0
+                              }
+                              name="attitudeSelfDecrement"
+                              onChange={handleSliderChange}
+                              aria-labelledby="input-slider"
+                              step={null}
+                              min={0}
+                              max={0.03}
+                              valueLabelDisplay="auto"
+                              marks={dmarks}
+                              style={{ color: "#2e3b55" }}
+                            />
+                          </Grid>
+                        </Grid>
+
+                        <Grid item>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Grid item>
+                              <Typography>Switching Threshold</Typography>
+                            </Grid>
+                            <Grid item>
+                              <Input
+                                value={formValues.switchingThreshold}
+                                name="switchingThreshold"
+                                size="small"
+                                onChange={handleCountryInputChange}
+                                onBlur={handleBlur}
+                                inputProps={{
+                                  step: 0.001,
+                                  min: 0,
+                                  max: 0.8,
+                                  type: "number",
+                                  "aria-labelledby": "input-slider",
+                                }}
+                              />
+                            </Grid>
+                          </Grid>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Slider
+                              value={
+                                typeof formValues.switchingThreshold ===
+                                "number"
+                                  ? formValues.switchingThreshold
+                                  : 0
+                              }
+                              name="switchingThreshold"
+                              onChange={handleSliderChange}
+                              aria-labelledby="input-slider"
+                              step={null}
+                              min={0}
+                              max={0.8}
+                              valueLabelDisplay="auto"
+                              marks={smarks}
+                              style={{ color: "#2e3b55" }}
+                            />
+                          </Grid>
+                        </Grid>
+
+                        <Grid item>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Grid item>
+                              <Typography>Disaffiliation Threshold</Typography>
+                            </Grid>
+                            <Grid item>
+                              <Input
+                                value={formValues.disaffiliationThreshold}
+                                name="disaffiliationThreshold"
+                                size="small"
+                                onChange={handleCountryInputChange}
+                                onBlur={handleBlur}
+                                inputProps={{
+                                  step: 0.001,
+                                  min: 0,
+                                  max: 0.8,
+                                  type: "number",
+                                  "aria-labelledby": "input-slider",
+                                }}
+                              />
+                            </Grid>
+                          </Grid>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Slider
+                              value={
+                                typeof formValues.disaffiliationThreshold ===
+                                "number"
+                                  ? formValues.disaffiliationThreshold
+                                  : 0
+                              }
+                              name="disaffiliationThreshold"
+                              onChange={handleSliderChange}
+                              aria-labelledby="input-slider"
+                              step={null}
+                              min={0}
+                              max={0.8}
+                              valueLabelDisplay="auto"
+                              marks={smarks}
+                              style={{ color: "#2e3b55" }}
+                            />
+                          </Grid>
+                        </Grid>
+
+                        <Grid item>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Grid item>
+                              <Typography>
+                                Number Of Interactions Per Step
+                              </Typography>
+                            </Grid>
+                            <Grid item>
+                              <Input
+                                value={formValues.numberOfInteractionsPerStep}
+                                name="numberOfInteractionsPerStep"
+                                size="small"
+                                onChange={handleCountryInputChange}
+                                onBlur={handleBlur}
+                                inputProps={{
+                                  step: 0.001,
+                                  min: 0,
+                                  max: 20,
+                                  type: "number",
+                                  "aria-labelledby": "input-slider",
+                                }}
+                              />
+                            </Grid>
+                          </Grid>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Slider
+                              value={
+                                typeof formValues.numberOfInteractionsPerStep ===
+                                "number"
+                                  ? formValues.numberOfInteractionsPerStep
+                                  : 0
+                              }
+                              name="numberOfInteractionsPerStep"
+                              onChange={handleSliderChange}
+                              aria-labelledby="input-slider"
+                              step={null}
+                              min={0}
+                              max={20}
+                              valueLabelDisplay="auto"
+                              marks={insmarks}
+                              style={{ color: "#2e3b55" }}
+                            />
+                          </Grid>
+                        </Grid>
+
+                        <Grid item>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Grid item>
+                              <Typography>Total conversion chance</Typography>
+                            </Grid>
+                            <Grid item>
+                              <Input
+                                value={formValues.totalConversionChance}
+                                name="totalConversionChance"
+                                size="small"
+                                onChange={handleCountryInputChange}
+                                onBlur={handleBlur}
+                                inputProps={{
+                                  step: 0.001,
+                                  min: 0,
+                                  max: 0.05,
+                                  type: "number",
+                                  "aria-labelledby": "input-slider",
+                                }}
+                              />
+                            </Grid>
+                          </Grid>
+                          <Grid
+                            container
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            style={{ margin: "15px 0px" }}
+                          >
+                            <Slider
+                              value={
+                                typeof formValues.totalConversionChance ===
+                                "number"
+                                  ? formValues.totalConversionChance
+                                  : 0
+                              }
+                              name="totalConversionChance"
+                              onChange={handleSliderChange}
+                              aria-label="Restricted values"
+                              defaultValue={formValues.totalConversionChance}
+                              marks={tccmarks}
+                              style={{ color: "#2e3b55" }}
+                              step={null}
+                              min={0}
+                              max={0.05}
+                              valueLabelDisplay="auto"
+                            />
+                          </Grid>
+                        </Grid>
+                      </>
+                    )}
+                  </div>
+                </Popover>
+              </Grid>
+              <Grid item>
+                <Button
+                  onClick={() => {
+                    dispatch({
+                      type: "START_COPY_FORM",
+                      payload: formValues,
+                    });
+                  }}
+                  variant="outlined"
+                  style={{
+                    minWidth: 40,
+                    margin: "20px 0 0 -10px",
+                    color: "black",
+                    borderColor: "black",
+                  }}
+                  className="tenth-step"
+                >
+                  <SyncAltIcon />
+                </Button>
+              </Grid>
+              <Grid item>
+                <Button
+                  onClick={() => handleShare(formValues)}
+                  variant="outlined"
+                  style={{
+                    minWidth: 40,
+                    margin: "20px 0 0 -10px",
+                    color: "black",
+                    borderColor: "black",
+                    opacity: !isshare ? 0.5 : 1,
+                    pointerEvents: !isshare ? "none" : "auto",
+                  }}
+                >
+                  <ShareIcon />
+                </Button>
+              </Grid>
+            </Grid>
+          </Grid>
+
+          <Typography mb={2}>Select the Dimension you want to view:</Typography>
+          <Grid container spacing={2}>
+            <Grid item className="third-step">
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Button
+                  variant="outlined"
+                  style={{
+                    backgroundColor: formValues.isPopulation ? "#2E3B55" : "",
+                    color: formValues.isPopulation ? "white" : "black",
+                    textTransform: "none",
+                    padding: "12px 30px",
+                    margin: "0px 10px 0px 0px",
+                    // display: isPopulation ? "" : !isFormOpen ? "none" : "",
+                  }}
+                  onClick={() => handleButtonClick("Population")}
+                >
+                  Population
+                </Button>
+
+                <Button
+                  variant="outlined"
+                  style={{
+                    backgroundColor: formValues.isAffiliation ? "#2E3B55" : "",
+                    color: formValues.isAffiliation ? "white" : "black",
+                    textTransform: "none",
+                    padding: "12px 30px",
+                    margin: "0px 10px  ",
+                    opacity: isLoggedIn ? 1 : 0.2,
+                  }}
+                  onClick={() => handleButtonClick("Affiliation")}
+                  disabled={!isLoggedIn}
+                >
+                  Affiliation Count
+                </Button>
+                <Button
+                  variant="outlined"
+                  style={{
+                    backgroundColor: formValues.isReligion ? "#2E3B55" : "",
+                    color: formValues.isReligion ? "white" : "black",
+                    textTransform: "none",
+                    padding: "12px 30px",
+                    margin: "0px 10px  ",
+                    opacity: isLoggedIn ? 1 : 0.2,
+                    // display: isReligion ? "" : !isFormOpen ? "none" : "",
+                  }}
+                  onClick={() => handleButtonClick("Religiosity")}
+                  disabled={!isLoggedIn}
+                >
+                  Religiosity Dimension
+                </Button>
+              </Stack>
+            </Grid>
+          </Grid>
+          {formValues.isReligion && (
+            <Grid container style={{ marginTop: 15 }}>
+              <Grid item>
+                <Typography>Select Variable:</Typography>
+
+                <RadioGroup
+                  value={formValues.dimradio}
+                  onChange={handleradiochange}
+                  name="dimradio"
+                >
+                  <Grid container>
+                    <Grid item>
+                      <FormControlLabel
+                        value="alldim"
+                        control={<Radio />}
+                        label="All Religiosity Dimensions Within an Affiliation"
+                        style={{ marginTop: 5 }}
+                      />
+                    </Grid>
+                    <Grid item>
+                      {formValues.dimradio === "alldim" && (
+                        <FormControl sx={{ m: 1, minWidth: 120 }} size="small">
+                          <Select
+                            name="dimrel"
+                            value={formValues.dimrel}
+                            onChange={handleCountryInputChange}
+                          >
+                            <MenuItem
+                              key="Total Population"
+                              value="Total Population"
+                            >
+                              Total Population
+                            </MenuItem>
+                            <MenuItem key="Christianity" value="Christianity">
+                              Christianity
+                            </MenuItem>
+                            <MenuItem key="No religion" value="No religion">
+                              No religion
+                            </MenuItem>
+                          </Select>
+                        </FormControl>
+                      )}
+                    </Grid>
+                  </Grid>
+
+                  <Grid container>
+                    <Grid item>
+                      <FormControlLabel
+                        value="allaff"
+                        control={<Radio />}
+                        label="Religiosity Dimensions by Affiliation"
+                        style={{ marginTop: 5 }}
+                      />
+                    </Grid>
+                    <Grid item>
+                      {formValues.dimradio === "allaff" && (
+                        <FormControl sx={{ m: 1, minWidth: 120 }} size="small">
+                          <Select
+                            name="dim"
+                            value={formValues.dim}
+                            onChange={handleCountryInputChange}
+                          >
+                            <MenuItem key="sup" value="sup">
+                              sup
+                            </MenuItem>
+                            <MenuItem key="public" value="public">
+                              public
+                            </MenuItem>
+                            <MenuItem key="private" value="private">
+                              private
+                            </MenuItem>
+                            <MenuItem key="importance" value="importance">
+                              importance
+                            </MenuItem>
+                          </Select>
+                        </FormControl>
+                      )}
+                    </Grid>
+                  </Grid>
+                </RadioGroup>
+              </Grid>
+            </Grid>
+          )}
+
+          <div
+            style={{
+              opacity:
+                formValues.isPopulation ||
+                formValues.isReligion ||
+                formValues.isAffiliation
+                  ? 1
+                  : 0.2,
+            }}
+          >
+            <Typography mt={2} style={{ display: isFormOpen ? "" : "none" }}>
+              {" "}
+              Data Source :
+              <Tooltip
+                title="More Data Sources are available after making an account"
+                placement="right-start"
+                arrow
+              >
+                <IconButton>
+                  <HelpOutlineIcon />
+                </IconButton>
+              </Tooltip>
+            </Typography>
+
+            <Grid
+              container
+              justifyContent="space-between"
+              alignItems="flex-start"
+            >
+              <Grid item className="fourth-step">
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Checkbox
+                    name="checkbox1"
+                    checked={formValues.checkbox1}
+                    onChange={handleCheckboxInputChange}
+                    //disabled={!isPopulation}
+                    style={{
+                      display: formValues.checkbox1
+                        ? "block"
+                        : !isFormOpen
+                        ? "none"
+                        : "",
+                    }}
+                  />
+                  <Typography
+                    style={{
+                      display: formValues.checkbox1
+                        ? "block"
+                        : !isFormOpen
+                        ? "none"
+                        : "",
+                    }}
+                  >
+                    CMAC
+                  </Typography>
+                  <Checkbox
+                    name="checkbox2"
+                    checked={formValues.checkbox2}
+                    onChange={handleCheckboxInputChange}
+                    disabled={
+                      formValues.isReligion ||
+                      formValues.isAffiliation ||
+                      !formValues.isPopulation
+                    }
+                    style={{
+                      display: formValues.checkbox2
+                        ? "block"
+                        : !isFormOpen
+                        ? "none"
+                        : "",
+                    }}
+                  />
+
+                  <Typography
+                    style={{
+                      ...(formValues.isReligion || formValues.isAffiliation
+                        ? { opacity: 0.2 }
+                        : { opacity: 1 }),
+                      display: formValues.checkbox2
+                        ? "block"
+                        : !isFormOpen
+                        ? "none"
+                        : "",
+                    }}
+                  >
+                    UN
+                  </Typography>
+
+                  {isLoggedIn ? (
+                    <>
+                      <Checkbox
+                        name="checkbox3"
+                        checked={formValues.checkbox3}
+                        onChange={handleCheckboxInputChange}
+                        disabled={formValues.isReligion}
+                        style={{
+                          display: formValues.checkbox3
+                            ? "block"
+                            : !isFormOpen
+                            ? "none"
+                            : "",
+                        }}
+                      />
+                      <Typography
+                        style={{
+                          opacity: !formValues.isReligion ? 1 : 0.2,
+                          display: formValues.checkbox3
+                            ? "block"
+                            : !isFormOpen
+                            ? "none"
+                            : "",
+                        }}
+                      >
+                        Pew
+                      </Typography>
+
+                      <Checkbox
+                        name="checkbox4"
+                        checked={formValues.checkbox4}
+                        onChange={handleCheckboxInputChange}
+                        disabled={formValues.isReligion}
+                        style={{
+                          display: formValues.checkbox4
+                            ? "block"
+                            : !isFormOpen
+                            ? "none"
+                            : "",
+                        }}
+                      />
+                      <Typography
+                        style={{
+                          opacity: !formValues.isReligion ? 1 : 0.2,
+                          display: formValues.checkbox4
+                            ? "block"
+                            : !isFormOpen
+                            ? "none"
+                            : "",
+                        }}
+                      >
+                        WRD
+                      </Typography>
+
+                      <Checkbox
+                        name="checkbox5"
+                        checked={formValues.checkbox5}
+                        onChange={handleCheckboxInputChange}
+                        disabled={
+                          formValues.isPopulation || formValues.isAffiliation
+                        }
+                        style={{
+                          opacity: formValues.isReligion ? 1 : 0.2,
+                          display: formValues.checkbox5
+                            ? "block"
+                            : !isFormOpen
+                            ? "none"
+                            : "",
+                        }}
+                      />
+                      <Typography
+                        style={{
+                          ...(formValues.isPopulation ||
+                          formValues.isAffiliation
+                            ? { opacity: 0.2 }
+                            : { opacity: 1 }),
+                          display: formValues.checkbox5
+                            ? "block"
+                            : !isFormOpen
+                            ? "none"
+                            : "",
+                        }}
+                      >
+                        DIM - R + / RICH
+                      </Typography>
+                    </>
+                  ) : (
+                    <Typography mt={2} style={{ fontWeight: 700 }}>
+                      ( Login For More Data Sources )
+                    </Typography>
+                  )}
+                </Stack>
+              </Grid>
+              <Grid item></Grid>
+            </Grid>
+
+            <Grid
+              container
+              alignItems="left"
+              justify="left"
+              direction="row"
+              style={{ marginTop: 10 }}
+            >
+              <Grid item>
+                <Button
+                  variant="contained"
+                  type="submit"
+                  style={{
+                    background: "#2E3B55",
+                    textTransform: "none",
+                    padding: "10px 30px",
+                    color: isSubmitted ? "white" : "white",
+                    opacity: isSubmitted ? 0.5 : 1,
+                    pointerEvents: isSubmitted ? "none" : "auto",
+                  }}
+                  className="seventh-step"
+                  disabled={isSubmitted}
+                >
+                  {isSubmitted ? "No Change" : "Update"}
+                </Button>
+              </Grid>
+              <Grid item>
+                <Button
+                  onClick={handleDownloadOpen}
+                  variant="outlined"
+                  style={{
+                    minWidth: 40,
+                    cursor: "pointer",
+                    color: "black",
+                    borderColor: "black",
+                    margin: "5px 15px 0 15px",
+                  }}
+                  className="sixth-step"
+                >
+                  <FileDownloadIcon />
+                </Button>
+                <Dialog
+                  open={downloadOpen}
+                  onClose={handleDownloadClose}
+                  fullWidth={true}
+                >
+                  <DownloadWindow />
+                </Dialog>
+              </Grid>
+            </Grid>
+          </div>
+        </div>
+      )}
+      {!isFormOpen && (
+        <Stack spacing={2} direction="row">
+          <h2 style={{ fontWeight: 400 }}>{title}</h2>
+
+          <Button
+            variant="outlined"
+            style={{
+              height: 40,
+              padding: "0px 20px",
+              marginTop: 20,
+              marginLeft: 10,
+              color: "black",
+              borderColor: "black",
+              textTransform: "none",
+              fontSize: 16,
+            }}
+          >
+            {formValues.ctry}
+          </Button>
+          <Button
+            variant="outlined"
+            style={{
+              backgroundColor: "#2E3B55",
+              color: "white",
+              textTransform: "none",
+              padding: "15px 25px",
+              height: 60,
+              marginTop: 8,
+              marginLeft: 25,
+            }}
+          >
+            {selectedDimension}
+          </Button>
+          <ul style={{ marginTop: 15, paddingLeft: 15 }}>
+            {formValues.checkbox1 && (
+              <li style={{ display: "flex", alignItems: "center" }}>
+                <CheckBoxIcon color="primary" />
+                <span style={{ marginLeft: 10 }}>CMAC</span>
+              </li>
+            )}
+            {formValues.checkbox2 && (
+              <li style={{ display: "flex", alignItems: "center" }}>
+                <CheckBoxIcon color="primary" />
+                <span style={{ marginLeft: 10 }}>UN</span>
+              </li>
+            )}
+            {formValues.checkbox3 && (
+              <li style={{ display: "flex", alignItems: "center" }}>
+                <CheckBoxIcon color="primary" />
+                <span style={{ marginLeft: 10 }}>Pew</span>
+              </li>
+            )}
+            {formValues.checkbox4 && (
+              <li style={{ display: "flex", alignItems: "center" }}>
+                <CheckBoxIcon color="primary" />
+                <span style={{ marginLeft: 10 }}>WRD</span>
+              </li>
+            )}
+            {formValues.checkbox5 && (
+              <li style={{ display: "flex", alignItems: "center" }}>
+                <CheckBoxIcon color="primary" />
+                <span style={{ marginLeft: 10 }}>DIM - R + / RICH</span>
+              </li>
+            )}
+          </ul>
+        </Stack>
+      )}
+      <Grid container justifyContent="center" alignItems="center">
+        <Grid item style={{ position: "relative", textAlign: "center" }}>
+          <IconButton
+            onClick={handleFormToggle}
+            style={{
+              position: "absolute",
+              width: 100,
+              background: "white",
+              borderRadius: "4px",
+              color: "black",
+              transform: "translate(-50%, 30%)",
+              padding: 0,
+            }}
+            className="eighth-step"
+          >
+            <ExpandMoreIcon
+              style={{
+                transform: !isFormOpen ? "rotate(0deg)" : "rotate(180deg)",
+              }}
+            />
+          </IconButton>
+        </Grid>
+      </Grid>
+    </form>
+  );
+};
+export default FilterForm;
